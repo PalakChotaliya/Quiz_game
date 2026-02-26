@@ -1,11 +1,264 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+<meta charset="UTF-8">
+<title>Ulatimate Quiz Game</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Poppins',sans-serif;}
+body{
+    height:100vh;
+    background:linear-gradient(135deg,#141e30,#243b55);
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    color:#fff;
+}
+.container{
+    width:95%;
+    max-width:900px;
+    background:rgba(255,255,255,0.08);
+    backdrop-filter:blur(20px);
+    border-radius:20px;
+    padding:30px;
+    box-shadow:0 20px 60px rgba(0,0,0,0.6);
+}
+h1{text-align:center;margin-bottom:15px;}
+input{
+    width:100%;
+    padding:12px;
+    border-radius:10px;
+    border:none;
+    margin:10px 0;
+}
+.btn{
+    width:100%;
+    padding:14px;
+    margin:10px 0;
+    border:none;
+    border-radius:12px;
+    background:#00c6ff;
+    color:#fff;
+    font-size:16px;
+    cursor:pointer;
+    transition:0.3s;
+}
+.btn:hover{background:#0072ff;transform:scale(1.05);}
+.option{
+    background:rgba(255,255,255,0.15);
+    padding:12px;
+    margin:8px 0;
+    border-radius:8px;
+    cursor:pointer;
+}
+.option:hover{background:#00c6ff;}
+.hidden{display:none;}
+.timer{text-align:right;font-size:14px;}
+.progress-bar{height:8px;background:#444;border-radius:10px;margin:10px 0;overflow:hidden;}
+.progress{height:100%;width:0%;background:#00ffcc;transition:0.3s;}
+.score{text-align:center;font-size:22px;margin-top:15px;}
+.rank{text-align:center;font-size:18px;margin-top:10px;}
+.analytics{text-align:center;margin-top:10px;font-size:14px;}
+.chart-container{
+    width:220px; /* SMALL CIRCLE */
+    margin:20px auto;
+}
+</style>
 </head>
+
 <body>
-    
+<div class="container">
+
+<h1>💎 Ulatimate Quiz Game</h1>
+
+<!-- LOGIN -->
+<div id="loginScreen">
+    <input type="text" id="username" placeholder="Enter Your Name">
+    <button class="btn" onclick="login()">Start</button>
+</div>
+
+<!-- CATEGORY -->
+<div id="categoryScreen" class="hidden">
+    <h3>Welcome, <span id="displayName"></span> 👋</h3>
+    <button class="btn" onclick="startQuiz('technical')">💻 Technical Quiz</button>
+    <button class="btn" onclick="startQuiz('nontech')">🧠 Non-Technical Quiz</button>
+</div>
+
+<!-- QUIZ -->
+<div id="quizSection" class="hidden">
+    <div class="timer">⏳ Time Left: <span id="time">10</span>s</div>
+    <div class="progress-bar"><div class="progress" id="progress"></div></div>
+    <h3 id="questionText"></h3>
+    <div id="options"></div>
+</div>
+
+<!-- RESULT -->
+<div id="resultSection" class="hidden">
+    <div class="score" id="finalScore"></div>
+    <div class="rank" id="rankText"></div>
+    <div class="analytics" id="analytics"></div>
+    <div class="chart-container">
+        <canvas id="resultChart"></canvas>
+    </div>
+    <button class="btn" onclick="goHome()">Back to Categories</button>
+</div>
+
+</div>
+
+<script>
+
+/* 14 TECHNICAL QUESTIONS */
+let technicalQuestions = [
+{question:"Which language runs in browser?",options:["Python","Java","C++","JavaScript"],answer:3},
+{question:"CPU stands for?",options:["Central Process Unit","Central Processing Unit","Computer Unit","None"],answer:1},
+{question:"Which is a database?",options:["HTML","MySQL","CSS","Python"],answer:1},
+{question:"HTML full form?",options:["Hyper Text Markup Language","HighText","Hyperlinks","None"],answer:0},
+{question:"CSS used for?",options:["Styling","Coding","Hardware","Database"],answer:0},
+{question:"RAM full form?",options:["Random Access Memory","Read Memory","Run Memory","None"],answer:0},
+{question:"Java is?",options:["OS","Programming Language","Browser","Device"],answer:1},
+{question:"Binary base?",options:["2","8","10","16"],answer:0},
+{question:"AI stands for?",options:["Artificial Intelligence","Auto Input","Advanced Internet","None"],answer:0},
+{question:"IP stands for?",options:["Internet Protocol","Internal Process","Input Port","None"],answer:0},
+{question:"Cloud example?",options:["AWS","Monitor","CPU","Mouse"],answer:0},
+{question:"Frontend example?",options:["HTML","MySQL","Java","Mongo"],answer:0},
+{question:"Backend framework?",options:["Spring Boot","CSS","HTML","Bootstrap"],answer:0},
+{question:"Operating System example?",options:["Windows","HTML","CSS","Python"],answer:0}
+];
+
+/* 14 NON TECH QUESTIONS */
+let nonTechQuestions = [
+{question:"Father of Nation (India)?",options:["Nehru","Mahatma Gandhi","Bose","Bhagat Singh"],answer:1},
+{question:"Red Planet?",options:["Earth","Mars","Venus","Jupiter"],answer:1},
+{question:"Largest Ocean?",options:["Indian","Pacific","Atlantic","Arctic"],answer:1},
+{question:"Capital of India?",options:["Delhi","Mumbai","Pune","Chennai"],answer:0},
+{question:"5 + 7 ?",options:["10","12","14","11"],answer:1},
+{question:"National Animal of India?",options:["Tiger","Lion","Elephant","Cow"],answer:0},
+{question:"Water formula?",options:["H2O","CO2","O2","NaCl"],answer:0},
+{question:"How many continents?",options:["5","6","7","8"],answer:2},
+{question:"Fastest land animal?",options:["Tiger","Cheetah","Lion","Horse"],answer:1},
+{question:"Sun is a?",options:["Planet","Star","Moon","Asteroid"],answer:1},
+{question:"USA currency?",options:["Dollar","Euro","Rupee","Yen"],answer:0},
+{question:"Festival of lights?",options:["Holi","Diwali","Eid","Christmas"],answer:1},
+{question:"Largest mammal?",options:["Elephant","Blue Whale","Giraffe","Hippo"],answer:1},
+{question:"Prime number?",options:["4","6","9","7"],answer:3}
+];
+
+let currentQuestions=[];
+let currentIndex=0;
+let score=0;
+let timer;
+let timeLeft=10;
+let chartInstance;
+let username="";
+
+function login(){
+    username=document.getElementById("username").value;
+    if(username===""){alert("Enter your name");return;}
+    document.getElementById("displayName").innerText=username;
+    document.getElementById("loginScreen").classList.add("hidden");
+    document.getElementById("categoryScreen").classList.remove("hidden");
+}
+
+function startQuiz(category){
+    score=0;
+    currentIndex=0;
+    currentQuestions = category==="technical" ? [...technicalQuestions] : [...nonTechQuestions];
+    currentQuestions.sort(()=>Math.random()-0.5);
+
+    document.getElementById("categoryScreen").classList.add("hidden");
+    document.getElementById("quizSection").classList.remove("hidden");
+    loadQuestion();
+}
+
+function loadQuestion(){
+    if(currentIndex>=currentQuestions.length){ showResult(); return; }
+
+    timeLeft=10;
+    document.getElementById("time").innerText=timeLeft;
+    startTimer();
+
+    let q=currentQuestions[currentIndex];
+    document.getElementById("questionText").innerText=q.question;
+
+    let html="";
+    q.options.forEach((opt,i)=>{
+        html+=`<div class="option" onclick="checkAnswer(${i})">${opt}</div>`;
+    });
+    document.getElementById("options").innerHTML=html;
+
+    document.getElementById("progress").style.width =
+        ((currentIndex)/currentQuestions.length)*100+"%";
+}
+
+function checkAnswer(selected){
+    clearInterval(timer);
+    if(selected===currentQuestions[currentIndex].answer){ score++; }
+    currentIndex++;
+    setTimeout(loadQuestion,400);
+}
+
+function startTimer(){
+    timer=setInterval(()=>{
+        timeLeft--;
+        document.getElementById("time").innerText=timeLeft;
+        if(timeLeft<=0){
+            clearInterval(timer);
+            currentIndex++;
+            loadQuestion();
+        }
+    },1000);
+}
+
+function showResult(){
+    document.getElementById("quizSection").classList.add("hidden");
+    document.getElementById("resultSection").classList.remove("hidden");
+
+    let total=currentQuestions.length;
+    let percentage=(score/total)*100;
+
+    document.getElementById("finalScore").innerText =
+        username+" 🎉 Your Score: "+score+" / "+total;
+
+    let rank="";
+    if(percentage>=80){rank="🥇 Gold";}
+    else if(percentage>=50){rank="🥈 Silver";}
+    else{rank="🥉 Bronze";}
+
+    document.getElementById("rankText").innerText="Rank: "+rank;
+    document.getElementById("analytics").innerText=
+        "Accuracy: "+percentage.toFixed(1)+"% | Wrong Answers: "+(total-score);
+
+    createChart(score,total-score);
+}
+
+function createChart(correct,wrong){
+    let ctx=document.getElementById("resultChart").getContext("2d");
+    if(chartInstance){chartInstance.destroy();}
+    chartInstance=new Chart(ctx,{
+        type:"doughnut",
+        data:{
+            labels:["Correct","Wrong"],
+            datasets:[{
+                data:[correct,wrong],
+                backgroundColor:["#00ffcc","#ff4d4d"]
+            }]
+        },
+        options:{
+            cutout:"70%",
+            plugins:{legend:{labels:{color:"#fff"}}}
+        }
+    });
+}
+
+function goHome(){
+    document.getElementById("resultSection").classList.add("hidden");
+    document.getElementById("categoryScreen").classList.remove("hidden");
+}
+
+</script>
 </body>
 </html>
+
